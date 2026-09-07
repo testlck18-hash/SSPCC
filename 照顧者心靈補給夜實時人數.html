@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>照顧者心靈補給夜 - 實時人數</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --status-color: #10b981;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            background-color: var(--card-bg);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .title-group h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .hero-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .circle-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+
+        .circle-svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: #334155;
+            stroke-width: 12;
+        }
+
+        .circle-progress {
+            fill: none;
+            stroke: var(--status-color);
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-dasharray: 502;
+            stroke-dashoffset: 502;
+            transition: stroke-dashoffset 0.6s ease-in-out, stroke 0.5s ease;
+        }
+
+        .circle-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .label-text {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+
+        .count-number {
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--text-main);
+        }
+
+        .unit {
+            font-size: 14px;
+            color: var(--text-sub);
+            margin-top: 4px;
+        }
+
+        .status-banner {
+            margin-top: 20px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--status-color);
+            border: 1px solid var(--status-color);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .info-card {
+            background-color: rgba(15, 23, 42, 0.6);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            color: var(--text-sub);
+        }
+
+        .info-value {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .footer-action {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .admin-panel {
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            background-color: #020617;
+            border: 1px dashed #f59e0b;
+            border-radius: 16px;
+            padding: 16px;
+            flex-direction: column;
+            gap: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .admin-title {
+            font-size: 12px;
+            color: #f59e0b;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-adjust {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: #334155;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-adjust:hover {
+            background-color: #475569;
+        }
+
+        .btn-adjust:active {
+            transform: scale(0.98);
+        }
+
+        .num-input {
+            width: 80px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: #fff;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .close-admin-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <div class="brand" id="brandHeader" onclick="handleHeaderClick()">
+            <div class="logo-icon">🌙</div>
+            <div class="title-group">
+                <h1>照顧者心靈補給夜</h1>
+            </div>
+        </div>
+        <div class="live-badge">
+            <div class="pulse-dot"></div>
+            <span>實時同步中</span>
+        </div>
+    </div>
+
+    <div class="hero-section">
+        <div class="circle-container">
+            <svg class="circle-svg" viewBox="0 0 180 180">
+                <circle class="circle-bg" cx="90" cy="90" r="80"></circle>
+                <circle class="circle-progress" id="progressCircle" cx="90" cy="90" r="80"></circle>
+            </svg>
+            <div class="circle-content">
+                <span class="label-text">當前人數</span>
+                <span class="count-number" id="currentCount">0</span>
+                <span class="unit">/ 30 人上限</span>
+            </div>
+        </div>
+        <div class="status-banner" id="statusBanner">同步數據中...</div>
+    </div>
+
+    <div class="info-card">
+        <div class="info-row">
+            <span class="info-label">場館容納率</span>
+            <span class="info-value" id="capacityPercent">0%</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">現時的位置</span>
+            <span class="info-value" id="comfortAdvice">計算中...</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">中心開放時間</span>
+            <span class="info-value">晚上 6:00 - 9:30</span>
+        </div>
+    </div>
+
+    <div class="footer-action">
+        <span>最後更新：<span id="lastUpdated">即時</span></span>
+        <span>最大容納：<b>30人</b></span>
+    </div>
+</div>
+
+<!-- 管理員控制面板 -->
+<div class="admin-panel" id="adminPanel">
+    <div class="admin-title">
+        <span>⚙️ 全局實時人數控制面板</span>
+        <button class="close-admin-btn" onclick="toggleAdminPanel(false)">✕ 隱藏</button>
+    </div>
+    
+    <div class="admin-controls">
+        <button class="btn-adjust" onclick="changeCount(-1)">-1</button>
+        <input type="number" id="adminInput" class="num-input" value="0" min="0" max="30" onchange="manualSetCount(this.value)">
+        <button class="btn-adjust" onclick="changeCount(1)">+1</button>
+    </div>
+    <div style="font-size:11px; color:#64748b; text-align:center;">（改動會即時推播至所有打開網頁的人）</div>
+</div>
+
+<script>
+    // 已自動綁定你的 Firebase 資料庫端點
+    const DB_URL = "https://caregiver-night-default-rtdb.firebaseio.com/current_count.json";
+
+    const MAX_CAPACITY = 30;
+    const CIRCLE_RADIUS = 80;
+    const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
+
+    let currentCount = 0;
+
+    function updateUI(count) {
+        count = Math.max(0, Math.min(count, MAX_CAPACITY));
+        currentCount = count;
+
+        const percent = Math.round((count / MAX_CAPACITY) * 100);
+
+        document.getElementById('currentCount').innerText = count;
+        document.getElementById('adminInput').value = count;
+
+        const progressCircle = document.getElementById('progressCircle');
+        const offset = CIRCUMFERENCE - (percent / 100) * CIRCUMFERENCE;
+        progressCircle.style.strokeDashoffset = offset;
+
+        // 狀態與顏色判定邏輯
+        let statusColor = '#10b981';
+        let statusText = '🟢 空間寬敞，歡迎隨時前來';
+        let adviceText = '仍有充裕的位置';
+
+        if (count >= 30) {
+            statusColor = '#ef4444';
+            statusText = '🚫 目前已沒有位置，請不要再前往中心';
+            adviceText = '請不要再前往中心';
+        } else if (count >= 24) {
+            statusColor = '#ef4444';
+            statusText = '🔴 會員們請斟酌是否仍要前往中心';
+            adviceText = '位置接近不足';
+        } else if (count >= 15) {
+            statusColor = '#f97316';
+            statusText = '🟠 人流適中，溫馨交流中';
+            adviceText = '位置漸漸飽滿';
+        }
+
+        document.documentElement.style.setProperty('--status-color', statusColor);
+        document.getElementById('statusBanner').innerText = statusText;
+        document.getElementById('capacityPercent').innerText = `${percent}%`;
+        document.getElementById('comfortAdvice').innerText = adviceText;
+
+        const now = new Date();
+        document.getElementById('lastUpdated').innerText = now.toTimeString().split(' ')[0];
+    }
+
+    /* 輪詢從 Firebase 獲取人數 */
+    async function fetchFromFirebase() {
+        try {
+            const res = await fetch(DB_URL + '?t=' + Date.now());
+            if (res.ok) {
+                const val = await res.json();
+                if (val !== null && parseInt(val) !== currentCount) {
+                    updateUI(parseInt(val) || 0);
+                }
+            }
+        } catch (e) {
+            console.error("讀取資料庫失敗：", e);
+        }
+    }
+
+    /* 將新人數寫入 Firebase */
+    async function sendToFirebase(newVal) {
+        const val = Math.max(0, Math.min(newVal, MAX_CAPACITY));
+        updateUI(val); // 立即更新本機畫面
+        
+        try {
+            await fetch(DB_URL, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(val)
+            });
+        } catch (e) {
+            console.error("寫入資料庫失敗：", e);
+        }
+    }
+
+    function changeCount(delta) {
+        sendToFirebase(currentCount + delta);
+    }
+
+    function manualSetCount(val) {
+        sendToFirebase(parseInt(val) || 0);
+    }
+
+    /* 連點標題 3 次開啟控制面板 */
+    let clickCount = 0;
+    let clickTimer = null;
+
+    function handleHeaderClick() {
+        clickCount++;
+        clearTimeout(clickTimer);
+        
+        if (clickCount >= 3) {
+            const panel = document.getElementById('adminPanel');
+            const isHidden = panel.style.display === 'none' || panel.style.display === '';
+            toggleAdminPanel(isHidden);
+            clickCount = 0;
+        } else {
+            clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
+        }
+    }
+
+    function toggleAdminPanel(show) {
+        document.getElementById('adminPanel').style.display = show ? 'flex' : 'none';
+    }
+
+    window.onload = () => {
+        fetchFromFirebase();
+        // 每 1 秒輪詢一次雲端資料庫，維持所有會員畫面即時同步
+        setInterval(fetchFromFirebase, 1000);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('admin') === 'true') {
+            toggleAdminPanel(true);
+        }
+    };
+</script>
+
+</body>
+</html>
